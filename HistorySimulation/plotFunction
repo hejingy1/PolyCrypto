@@ -1,0 +1,111 @@
+from asyncore import close_all
+import datetime
+import statistics
+from matplotlib import pyplot as plt
+import pandas as pd
+from numpy import diff, isin
+import mplfinance as mpf
+
+
+from PolygonFunctionsCrypto import Get_historical_data
+
+"""
+爆仓单量可能和稳定币需求上升挂钩，补仓需要稳定币来加速交易补仓
+"""
+
+
+eth_dump1d = Get_historical_data("X:ETHUSD", datetime.date(2021, 12, 20), datetime.date(2021, 12, 27), span="minute")
+
+#mpf.plot(eth_dump1d,type='candle',volume=True)
+
+
+
+def turn_panda_tolist(panda_data):
+    close_panda_data = panda_data["close"].tolist()
+    volume_panda_data = panda_data["volume"].tolist()
+    time_panda_data = panda_data["time"].tolist()
+    return close_panda_data, volume_panda_data, time_panda_data
+
+ethusd_close, ethusd_volume, ethusd_time = turn_panda_tolist(eth_dump1d)
+
+def display_volatility(close, volume):
+    average1m = close[0]
+    average3mL = [close[0]]
+    average5mL = [close[0]]
+
+    difference_1m = []
+    difference_3m = []
+    difference_5m = []
+
+    list_length = []
+
+    for i in range(len(close)):
+        list_length.append(i)
+        difference_1m.append((abs(close[i] - average1m)/average1m*100000)/volume[i])
+        difference_3m.append((abs(close[i] - statistics.mean(average3mL))/statistics.mean(average3mL)*100000)/volume[i])
+        difference_5m.append((abs(close[i] - statistics.mean(average5mL))/statistics.mean(average5mL)*100000)/volume[i])
+
+        #update information
+        average1m = close[i]
+        average3mL.append(close[i])
+        average5mL.append(close[i])
+
+        if len(average3mL) > 3:
+            del average3mL[0]
+
+        if len(average5mL) > 5:
+            del average5mL[0]
+    return difference_1m, difference_3m, difference_5m
+
+
+difference_1m, difference_3m, difference_5m = display_volatility(ethusd_close, ethusd_volume)
+
+fig, axs = plt.subplots(2, 2)
+fig.suptitle('Price change')
+axs[0, 0].plot(ethusd_time, difference_1m)
+axs[0, 0].set_title("Liqu Index 1m")
+axs[0, 1].plot(ethusd_time, difference_3m)
+axs[0, 1].set_title("Liqu Index 3m")
+axs[1, 0].plot(ethusd_time, ethusd_volume)
+axs[1, 0].set_title("Close volume Trend")
+axs[1, 1].plot(ethusd_time, ethusd_close)
+axs[1, 1].set_title("Close price Trend")
+
+
+#plt.show()
+
+
+
+
+"""
+
+
+
+
+def turn_panda_tolist(panda_data):
+    open_panda_data = panda_data["open"].tolist()
+    high_panda_data = panda_data["high"].tolist()
+    low_panda_data = panda_data["low"].tolist()
+    close_panda_data = panda_data["close"].tolist()
+    time_panda_data = panda_data["time"].tolist()
+    volume_panda_data = panda_data["volume"].tolist()   
+    return open_panda_data, high_panda_data, low_panda_data, close_panda_data, volume_panda_data, time_panda_data
+
+ethusd_open, ethusd_high, ethusd_low, ethusd_close, ethusd_volume, ethusd_time = turn_panda_tolist(eth_dump)
+
+def volatility_calculation(high, low, volume):
+    percentage_change = ((high-low)/high*10000)/volume
+    return percentage_change
+
+
+# print(len(ethusd_time), len(ethusd_close))
+# print(ethusd_time[0], ethusd_close[0], ethusd_volume[0])
+
+def display_volatility(high_list, low_list, volume_list, time_list):
+    for i in range(len(high_list)):
+        
+
+    return difference_1m
+
+
+difference_1m= display_volatility(ethusd_close, ethusd_volume)"""
