@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import mplfinance as mpf
 from urllib.request import urlopen
+import pyarrow as pa
 
 
 from PolygonFunctionsCrypto import Get_historical_data
@@ -20,15 +21,27 @@ from PolygonFunctionsCrypto import Get_historical_data
 eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 7, 20), span="minute")
 
 
-eth_dump_np = eth_dump.to_numpy()
+def construct_inliquidity(data, length):
+    eth_dump_np = data.to_numpy()
 
-liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
+    liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
+    eth_dump_np = np.c_[eth_dump_np, liquidity_index]
 
-eth_dump_liquidity = np.concatenate([[liquidity_index], [eth_dump_np[:, 6]]], axis=0)
-eth_dump_liquidity = eth_dump_liquidity.T
+    #eth_dump_liquidity_sort = np.argsort(liquidity_index)
+    eth_dump_sort = eth_dump_np[eth_dump_np[:, 8].argsort()]
+    eth_dump_sort_length = eth_dump_sort[0:length, :]
+    return eth_dump_sort_length
 
-eth_dump_liquidity_sort = np.argsort(liquidity_index)
-eth_dump_2000 = eth_dump.drop(eth_dump[eth_dump[""]]
+
+def numpy_to_parquet(sorted_numpy):
+    parquet_table = pa.table({'volume': sorted_numpy[:, 0],'vwap': sorted_numpy[:, 1],'open':sorted_numpy[:, 2],
+                                'close': sorted_numpy[:, 3],'high': sorted_numpy[:, 4],'low': sorted_numpy[:, 5],
+                                'time': sorted_numpy[:, 6],'n': sorted_numpy[:, 7], "inliquidity": sorted_numpy[:, 8]})
+    pa.parquet.write_table(parquet_table, "eth_dump.parquet")
+    
+    
+
+
 
 
 #df_length = pd.DataFrame({"l": [i for i in range(len(eth_dump.index))]})
