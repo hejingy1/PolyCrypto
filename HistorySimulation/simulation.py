@@ -15,9 +15,9 @@ from PolygonFunctionsCrypto import Get_historical_data
 爆仓单量可能和稳定币需求上升挂钩，补仓需要稳定币来加速交易补仓
 """
 
+#132480
 
-
-eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 11, 20), datetime.date(2021, 11, 26), span="hour")
+eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 9, 20), span="minute")
 
 
 eth_dump_np = eth_dump.to_numpy()
