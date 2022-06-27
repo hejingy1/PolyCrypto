@@ -17,7 +17,7 @@ from PolygonFunctionsCrypto import Get_historical_data
 
 
 
-eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 11, 20), datetime.date(2021, 11, 26), span="hour")
+eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 7, 20), span="minute")
 
 
 eth_dump_np = eth_dump.to_numpy()
@@ -26,17 +26,22 @@ liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:,
 
 eth_dump_liquidity = np.concatenate([[liquidity_index], [eth_dump_np[:, 6]]], axis=0)
 eth_dump_liquidity = eth_dump_liquidity.T
-df_length = pd.DataFrame({"l": [i for i in range(len(eth_dump.index))]})
+
+eth_dump_liquidity_sort = np.argsort(liquidity_index)
+eth_dump_2000 = eth_dump.drop(eth_dump[eth_dump[""]]
+
+
+#df_length = pd.DataFrame({"l": [i for i in range(len(eth_dump.index))]})
 
 # plt.plot(eth_dump_liquidity[:, 1], eth_dump_liquidity[:, 0])
 # plt.show()
-open_mav10 = eth_dump["close"].rolling(5).mean().values
+# open_mav10 = eth_dump["close"].rolling(5).mean().values
 
-mavdf = pd.DataFrame(dict(OpMav10=open_mav10,liquidity=liquidity_index),index=df_length.index)
+# mavdf = pd.DataFrame(dict(OpMav10=open_mav10,liquidity=liquidity_index),index=df_length.index)
 
-apd = mpf.make_addplot(mavdf, type='line')
+# apd = mpf.make_addplot(mavdf, type='line')
 
-mpf.plot(eth_dump,type='candle',volume=True, addplot=apd, style='yahoo', tight_layout=True)
+# mpf.plot(eth_dump,type='candle',volume=True, addplot=apd, style='yahoo', tight_layout=True)
 
 
 
