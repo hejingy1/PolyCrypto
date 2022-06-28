@@ -17,8 +17,10 @@ from PolygonFunctionsCrypto import Get_historical_data
 
 #132480
 
-eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 9, 20), span="minute")
 
+eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 11, 20), datetime.date(2021, 11, 26), span="hour")
+
+eth_dump_np = eth_dump.to_numpy()
 
 eth_dump_np = eth_dump.to_numpy()
 
