@@ -18,8 +18,7 @@ https://api.polygon.io/v3/trades/X:BTC-USD?timestamp=2021-06-20&order=asc&limit=
 #132480
 
 
-eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 8, 20), span="minute")
-print(eth_dump.next_url)
+eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 7, 20), span="minute")
 
 
 def construct_inliquidity(data, length):
@@ -44,9 +43,9 @@ def parquet_to_csv(name):
     df = pd.read_parquet("%s.parquet" %name)
     df.to_csv("%s.csv" % name)
     
-# eth_inliq = construct_inliquidity(eth_dump, 2000)
-# numpy_to_parquet(eth_inliq, "eth_dump")
-# parquet_to_csv("eth_dump")
+eth_inliq = construct_inliquidity(eth_dump, 2000)
+numpy_to_parquet(eth_inliq, "eth_dump")
+parquet_to_csv("eth_dump")
 
 
  
