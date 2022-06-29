@@ -21,7 +21,7 @@ https://api.polygon.io/v3/trades/X:BTC-USD?timestamp=2021-06-20&order=asc&limit=
 eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 7, 20), span="minute")
 
 
-def construct_inliquidity(data, length):
+def construct_illiquidity(data, length):
     eth_dump_np = data.to_numpy()
 
     liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
@@ -36,15 +36,15 @@ def construct_inliquidity(data, length):
 def numpy_to_parquet(sorted_numpy, name):
     parquet_table = pa.table({'volume': sorted_numpy[:, 0],'vwap': sorted_numpy[:, 1],'open':sorted_numpy[:, 2],
                                 'close': sorted_numpy[:, 3],'high': sorted_numpy[:, 4],'low': sorted_numpy[:, 5],
-                                'time': sorted_numpy[:, 6],'n': sorted_numpy[:, 7], "inliquidity": sorted_numpy[:, 8]})
+                                'time': sorted_numpy[:, 6],'n': sorted_numpy[:, 7], "illiquidity": sorted_numpy[:, 8]})
     pq.write_table(parquet_table, "%s.parquet" %name)
 
 def parquet_to_csv(name):
     df = pd.read_parquet("%s.parquet" %name)
     df.to_csv("%s.csv" % name)
-    
-eth_inliq = construct_inliquidity(eth_dump, 2000)
-numpy_to_parquet(eth_inliq, "eth_dump")
+    z
+eth_illiq = construct_illiquidity(eth_dump, 2000)
+numpy_to_parquet(eth_illiq, "eth_dump")
 parquet_to_csv("eth_dump")
 
 
