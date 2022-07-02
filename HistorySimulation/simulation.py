@@ -19,11 +19,10 @@ https://api.polygon.io/v3/trades/X:BTC-USD?timestamp=2021-06-20&order=asc&limit=
 
 
 eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 20), datetime.date(2021, 7, 20), span="minute")
-
+eth_dump_np = eth_dump.to_numpy()
 
 def construct_illiquidity(data, length):
-    eth_dump_np = data.to_numpy()
-
+    eth_dump_np = data
     liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
     eth_dump_np = np.c_[eth_dump_np, liquidity_index]
 
@@ -42,8 +41,19 @@ def numpy_to_parquet(sorted_numpy, name):
 def parquet_to_csv(name):
     df = pd.read_parquet("%s.parquet" %name)
     df.to_csv("%s.csv" % name)
-    z
-eth_illiq = construct_illiquidity(eth_dump, 2000)
+    
+def find_selling(data, data_inliquidity, time_after):
+    open_after_time = []
+    for i in data_inliquidity:
+        a = np.where(data[:, 6] == i[6])[0][0]
+        try:
+            open_after_time.append(data[a+time_after][2])
+        except IndexError:
+            open_after_time.append(data[a][2])
+    return open_after_time
+
+eth_illiq = construct_illiquidity(eth_dump_np, 1500)
+a = find_selling(eth_dump_np, eth_illiq, 3)
 numpy_to_parquet(eth_illiq, "eth_dump")
 parquet_to_csv("eth_dump")
 

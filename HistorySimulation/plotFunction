@@ -1,7 +1,5 @@
-from asyncore import close_all
 import datetime
 from ipaddress import v4_int_to_packed
-import statistics
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -18,7 +16,7 @@ from PolygonFunctionsCrypto import Get_historical_data
 #132480
 
 
-eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 11, 20), datetime.date(2021, 11, 26), span="hour")
+eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 25), datetime.date(2021, 7, 1), span="minute")
 
 eth_dump_np = eth_dump.to_numpy()
 
@@ -38,7 +36,8 @@ mavdf = pd.DataFrame(dict(OpMav10=open_mav10,liquidity=liquidity_index),index=df
 
 apd = mpf.make_addplot(mavdf, type='line')
 
-mpf.plot(eth_dump,type='candle',volume=True, addplot=apd, style='yahoo', tight_layout=True)
+mpf.plot(eth_dump,type='candle',volume=True, style='yahoo', tight_layout=True)
+#mpf.plot(eth_dump,type='candle',volume=True, addplot=apd, style='yahoo', tight_layout=True)
 
 
 
