@@ -15,6 +15,10 @@ from PolygonFunctionsCrypto import Get_historical_data
 https://api.polygon.io/v3/trades/X:BTC-USD?timestamp=2021-06-20&order=asc&limit=50000&sort=timestamp&apiKey=vyEZKZQExqHm6QEiT7LbMCCNrxvxHU0J
 """
 
+"""
+触发节奏， 早晚时间， 未来函数"""
+
+
 #Function calculate the illiquidity from the given span date and add it as a column to the numpy
 def construct_illiquidity(data, length):
     eth_dump_np = data
@@ -25,6 +29,22 @@ def construct_illiquidity(data, length):
     eth_dump_sort = eth_dump_np[eth_dump_np[:, 8].argsort()]
     eth_dump_sort_length = eth_dump_sort[0:length, :]
     return eth_dump_sort_length, eth_dump_np
+
+
+def construct_illiquidity_pandas(data, length):
+    liquidity_index = ((data["close"] - data["open"])*100000/data["open"])/data["n"]
+    data_dump = pd.concat([data, liquidity_index], axis=1)
+
+    data_dump_sort = data_dump.sort_values(by=data_dump.columns[-1])
+    data_dump_sort_length = data_dump_sort.iloc[:length]
+    return data_dump_sort_length, data_dump
+
+
+#create a new column that contain the relative illiquidity index of the relavent data set
+def calculate_illiquidity(data):
+    liquidity_index = ((data[:, 3] - data[:, 2])*100000/data[:, 2])/ data[:, -1]
+    data = np.c_[data, liquidity_index]
+    return data
 
 
 #Function convert the numpy to parquet file and store it
@@ -66,11 +86,11 @@ def margin_calculator(name, length, buying_name, selling_name):
     a = a.to_numpy()
     return a.sum()/length
 
-collect_times = 100
-selling_time = 30
-a = []
-starting_month = datetime.date(2021, 1, 20)
-date_list = [starting_month + relativedelta(months=+x) for x in range(11)]
+def month_list_generator(length, starting_month):
+    month_list = [starting_month + relativedelta(months=+x) for x in range(length)]
+    return month_list
+
+
 
 """
 The longer the selling time clearly indicates the bigger risk that holding such asset would carry, no clear method to offset it"""
@@ -80,23 +100,30 @@ The longer the selling time clearly indicates the bigger risk that holding such 
 
 
 #iterate through 11 months of data
-def run_year():
-    for i in date_list:
-        eth_dump = Get_historical_data("X:ETHUSD", i, i+relativedelta(months=+1), span="minute")
-        eth_dump_np = eth_dump.to_numpy()
 
-        eth_illiq = construct_illiquidity(eth_dump_np, collect_times)
+if __name__ == "__main__":
+    collect_times = 600
+    selling_time = 2
+    a = []
+    starting_month = datetime.date(2021, 6, 20)
+    month_list = month_list_generator(11, starting_month)
+    for i in month_list:
+        eth_dump = Get_historical_data("X:ETHUSD", i, i+relativedelta(months=+1), span="minute")
+        #filter non-active trading hours
+        eth_dump_cut = eth_dump.between_time("03:00", "22:00")
+        eth_dump_np = eth_dump.to_numpy()
+        eth_dump_np_cut = eth_dump_cut.to_numpy()
+
+        eth_illiq, eth_illiq_useless = construct_illiquidity(eth_dump_np_cut, collect_times)
         numpy_to_parquet(eth_illiq, "eth_dump")
         selling_price = find_selling(eth_dump_np, eth_illiq, selling_time)
         # selling_price2 = find_selling(eth_dump_np, eth_illiq, selling_time+1)
         add_column_to_parquet(selling_price, "eth_dump", "price_after")
         # add_column_to_parquet(selling_price2, "eth_dump", "price_after_2")
         a.append(margin_calculator("eth_dump", collect_times, "close", "price_after"))
+        print(a)
 
-    print(a)
-
-
-    parquet_to_csv("eth_dump")
+        #parquet_to_csv("eth_dump")
 
 
 
