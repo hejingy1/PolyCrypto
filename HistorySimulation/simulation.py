@@ -22,7 +22,7 @@ https://api.polygon.io/v3/trades/X:BTC-USD?timestamp=2021-06-20&order=asc&limit=
 #Function calculate the illiquidity from the given span date and add it as a column to the numpy
 def construct_illiquidity(data, length):
     eth_dump_np = data
-    liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
+    liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*10000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
     eth_dump_np = np.c_[eth_dump_np, liquidity_index]
 
     #eth_dump_liquidity_sort = np.argsort(liquidity_index)
@@ -32,8 +32,9 @@ def construct_illiquidity(data, length):
 
 
 def construct_illiquidity_pandas(data, length):
-    liquidity_index = ((data["close"] - data["open"])*100000/data["open"])/data["n"]
+    liquidity_index = ((data["close"] - data["open"])*10000/data["open"])/data["n"]
     data_dump = pd.concat([data, liquidity_index], axis=1)
+    data_dump = data_dump.rename(columns={0: "illiquidity"}, inplace=True)
 
     data_dump_sort = data_dump.sort_values(by=data_dump.columns[-1])
     data_dump_sort_length = data_dump_sort.iloc[:length]

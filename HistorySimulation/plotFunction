@@ -27,7 +27,7 @@ eth_dump_np = eth_dump_cut.to_numpy()
 eth_dump_np_2 = eth_dump.to_numpy()
 
 eth_illiq_sorted, eth_illiq = construct_illiquidity(eth_dump_np, collect_times)
-liquidity_index = ((eth_dump_np_2[:, 3] - eth_dump_np_2[:, 2])*100000/eth_dump_np_2[:, 2])/ eth_dump_np_2[:, -1]
+liquidity_index = ((eth_dump_np_2[:, 3] - eth_dump_np_2[:, 2])*10000/eth_dump_np_2[:, 2])/ eth_dump_np_2[:, -1]
 eth_dump_np_2 = np.c_[eth_dump_np_2, liquidity_index]
 # apd = mpf.make_addplot(eth_illiq[:, 3], type='scatter')
 s = []
