@@ -40,6 +40,7 @@ def parquet_to_csv(name):
     df.to_csv("%s.csv" % name)
     
 
+
 #Function that find the selling price based on the time given
 def find_selling(data, data_inliquidity, time_after):
     open_after_time = []
