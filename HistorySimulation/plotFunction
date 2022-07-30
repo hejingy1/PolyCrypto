@@ -4,40 +4,40 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 import mplfinance as mpf
-from urllib.request import urlopen
-
+from dateutil.relativedelta import *
+from simulation import construct_illiquidity
 
 from PolygonFunctionsCrypto import Get_historical_data
 
 """
-爆仓单量可能和稳定币需求上升挂钩，补仓需要稳定币来加速交易补仓
+到时候需要全部重新的构思一下数据结构的调用，pandas和numpy的变换减少
 """
 
-#132480
+collect_times = 10
+selling_time = 2
+a = []
+starting_month = datetime.date(2021, 1, 20)
+date_list = [starting_month + relativedelta(months=+x) for x in range(11)]
 
 
-eth_dump = Get_historical_data("X:ETHUSD", datetime.date(2021, 6, 25), datetime.date(2021, 7, 1), span="minute")
+eth_dump = Get_historical_data("X:ETHUSD", date_list[0], date_list[0]+relativedelta(days=+5), span="minute")
+eth_dump_cut = eth_dump.between_time("22:00", "03:00")
 
-eth_dump_np = eth_dump.to_numpy()
+eth_dump_np = eth_dump_cut.to_numpy()
+eth_dump_np_2 = eth_dump.to_numpy()
 
-eth_dump_np = eth_dump.to_numpy()
-
-liquidity_index = ((eth_dump_np[:, 3] - eth_dump_np[:, 2])*100000/eth_dump_np[:, 2])/ eth_dump_np[:, -1]
-
-eth_dump_liquidity = np.concatenate([[liquidity_index], [eth_dump_np[:, 6]]], axis=0)
-eth_dump_liquidity = eth_dump_liquidity.T
-df_length = pd.DataFrame({"l": [i for i in range(len(eth_dump.index))]})
-
-# plt.plot(eth_dump_liquidity[:, 1], eth_dump_liquidity[:, 0])
-# plt.show()
-open_mav10 = eth_dump["close"].rolling(5).mean().values
-
-mavdf = pd.DataFrame(dict(OpMav10=open_mav10,liquidity=liquidity_index),index=df_length.index)
-
-apd = mpf.make_addplot(mavdf, type='line')
-
-mpf.plot(eth_dump,type='candle',volume=True, style='yahoo', tight_layout=True)
-#mpf.plot(eth_dump,type='candle',volume=True, addplot=apd, style='yahoo', tight_layout=True)
+eth_illiq_sorted, eth_illiq = construct_illiquidity(eth_dump_np, collect_times)
+liquidity_index = ((eth_dump_np_2[:, 3] - eth_dump_np_2[:, 2])*10000/eth_dump_np_2[:, 2])/ eth_dump_np_2[:, -1]
+eth_dump_np_2 = np.c_[eth_dump_np_2, liquidity_index]
+# apd = mpf.make_addplot(eth_illiq[:, 3], type='scatter')
+s = []
+for i in eth_dump_np_2:
+    if i[8] <= eth_illiq_sorted[-1, 8] and (i[6].hour>3 and i[6].hour<22):
+        s.append(i[3])
+    else:
+        s.append(np.nan)
+apd = mpf.make_addplot(s, type='scatter', markersize = 8, color='red')
+mpf.plot(eth_dump, type='line', volume=True, style='yahoo', addplot=apd, tight_layout=True)
 
 
 
