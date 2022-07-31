@@ -8,6 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from dateutil.relativedelta import *
 from matplotlib import pyplot as plt
+from policy import Pastdata, policy
 
 from PolygonFunctionsCrypto import Get_historical_data
 
@@ -104,6 +105,7 @@ The longer the selling time clearly indicates the bigger risk that holding such 
 #iterate through 11 months of data
 
 if __name__ == "__main__":
+    """
     collect_times = 600
     selling_time = 2
     a = []
@@ -126,6 +128,22 @@ if __name__ == "__main__":
         print(a)
 
         #parquet_to_csv("eth_dump")
+    """
+    collect_times = 600
+    selling_time = 2
+    a = []
+    ticker = "X:ETHUSD"
+    starting_month = datetime.date(2021, 6, 20)
+    month_list = month_list_generator(11, starting_month)
+    past_two = Pastdata(starting_month, 2)
+    past_two.fetch_past_data(ticker)
+    past_two.calculate_day_volume_average(25, 5)
+    eth_dump = Get_historical_data(ticker, month_list[2], month_list[2]+relativedelta(months=+1), span="minute")
+
+
+
+
+    
 
 
 
