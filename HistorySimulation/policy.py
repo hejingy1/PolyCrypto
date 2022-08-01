@@ -19,6 +19,8 @@ class Pastdata:
         self.volume_average_night = 0
         self.price_change_average_morning = 0
         self.price_change_average_night = 0
+        self.morning_pick = 0
+        self.night_pick = 0
     
     def fetch_past_data(self, type):
         month_list = month_list_generator(self.month_length, self.starting_date)
@@ -43,20 +45,21 @@ class Pastdata:
             self.volume_average_night = day_night_sorted["n"].sum()
             self.price_change_average_morning = (day_morning_sorted["illiquidity"]*day_morning_sorted["n"]).sum()
             self.price_change_average_night = (day_night_sorted["illiquidity"]*day_night_sorted["n"]).sum()
-
-        self.volume_average_morning = self.volume_average_morning/self.row_length
-        self.volume_average_night = self.volume_average_night/self.row_length
-        self.price_change_average_morning = self.price_change_average_morning/self.row_length
-        self.price_change_average_night = self.price_change_average_night/self.row_length
+        self.morning_pick = morning_pick
+        self.night_pick = night_pick
+        self.volume_average_morning = self.volume_average_morning/morning_pick
+        self.volume_average_night = self.volume_average_night/night_pick
+        self.price_change_average_morning = self.price_change_average_morning/morning_pick
+        self.price_change_average_night = self.price_change_average_night/night_pick
     
     def new_day(self, new_day, morning_or_not):
         #there might be a problem where the input day is morning but the first day is night thus it would create a small understanding error
         if morning_or_not:
-            self.volume_average_morning = self.volume_average_morning-(self.past_data["n"].iloc[0]/self.row_length)+(new_day["n"]/self.row_length)
-            self.price_change_average_morning = self.price_change_average_morning-(self.past_data["illiquidity"].iloc[0]*self.past_data["n"].iloc[0]/self.row_length)+(new_day["illiquidity"].iloc[0]*new_day["n"].iloc[0]/self.row_length)
+            self.volume_average_morning = self.volume_average_morning-(self.past_data["n"].iloc[0]/self.morning_pick)+(new_day["n"]/self.morning_pick)
+            self.price_change_average_morning = self.price_change_average_morning-(self.past_data["illiquidity"].iloc[0]*self.past_data["n"].iloc[0]/self.morning_pick)+(new_day["illiquidity"].iloc[0]*new_day["n"].iloc[0]/self.morning_pick)
         else:
-            self.volume_average_night = self.volume_average_night-(self.past_data["n"].iloc[0]/self.row_length)+(new_day["n"]/self.row_length)
-            self.price_change_average_night = self.price_change_average_night-(self.past_data["illiquidity"].iloc[0]*self.past_data["n"].iloc[0]/self.row_length)+(new_day["illiquidity"].iloc[0]*new_day["n"].iloc[0]/self.row_length)
+            self.volume_average_night = self.volume_average_night-(self.past_data["n"].iloc[0]/self.night_pick)+(new_day["n"]/self.night_pick)
+            self.price_change_average_night = self.price_change_average_night-(self.past_data["illiquidity"].iloc[0]*self.past_data["n"].iloc[0]/self.night_pick)+(new_day["illiquidity"].iloc[0]*new_day["n"].iloc[0]/self.night_pick)
             
         self.past_data = self.past_data.iloc[1:, :]
         self.past_data = pd.concat([self.past_data, new_day], axis=0)
