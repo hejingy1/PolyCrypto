@@ -1,3 +1,4 @@
+from calendar import month
 import datetime
 from ipaddress import v4_int_to_packed
 import pandas as pd
@@ -8,7 +9,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from dateutil.relativedelta import *
 from matplotlib import pyplot as plt
-from policy import Pastdata, policy
+from Policy import *
+from plotFunction import plot_graph
 
 from PolygonFunctionsCrypto import Get_historical_data
 
@@ -17,7 +19,9 @@ https://api.polygon.io/v3/trades/X:BTC-USD?timestamp=2021-06-20&order=asc&limit=
 """
 
 """
-触发节奏， 早晚时间， 未来函数"""
+触发节奏， 早晚时间， 未来函数
+研究一下怎么维持import的整洁性
+"""
 
 
 #Function calculate the illiquidity from the given span date and add it as a column to the numpy
@@ -32,14 +36,49 @@ def construct_illiquidity(data, length):
     return eth_dump_sort_length, eth_dump_np
 
 
-def construct_illiquidity_pandas(data, length):
+def construct_illiquidity_pandas(data):
     liquidity_index = ((data["close"] - data["open"])*10000/data["open"])/data["n"]
-    data_dump = pd.concat([data, liquidity_index], axis=1)
-    data_dump = data_dump.rename(columns={0: "illiquidity"}, inplace=True)
+    data_dump = data.assign(illiquidity=liquidity_index)
+    return data_dump
 
-    data_dump_sort = data_dump.sort_values(by=data_dump.columns[-1])
+
+def sort_construct_illiquidity_pandas(data, length):
+    data_dump_sort = data.sort_values(by=data.columns[-1])
     data_dump_sort_length = data_dump_sort.iloc[:length]
-    return data_dump_sort_length, data_dump
+    return data_dump_sort_length
+
+
+def construct_month_signal(data_dump, past_data):
+    data_dump_signal = data_dump.assign(signal=0)
+    month_split_to_day = np.split(data_dump_signal, (data_dump_signal.shape[0]/1440))
+    c = 0
+    for day in month_split_to_day:
+        c += 1
+        morning_time_illiquidity = []
+        morning_time_volume = []
+        night_time_illiquidity = []
+        night_time_volume = []
+        for index, row in day.iterrows():
+            signal = policy(row, past_data)
+            data_dump_signal.at[index, "signal"] = signal
+            if signal != 0:
+                if check_time_interval(row):
+                    morning_time_illiquidity.append(row["illiquidity"])
+                    morning_time_volume.append(row['n'])
+                else:
+                    night_time_illiquidity.append(row["illiquidity"])
+                    night_time_volume.append(row['n'])
+        if c == 4:
+            pandas_to_parquet(day, "special_day")
+            parquet_to_csv("special_day")
+            print(past_data.volume_average_morning)
+            print(past_data.volume_average_night)
+            print(past_data.illiquidity_average_morning)
+            print(past_data.illiquidity_average_night)
+        past_data.add_new_day(morning_time_illiquidity, morning_time_volume, night_time_illiquidity, night_time_volume)
+        # print("past:", past_data.volume_average_morning)
+        # print("past_night:", past_data.volume_average_night)
+    return data_dump_signal
 
 
 #create a new column that contain the relative illiquidity index of the relavent data set
@@ -50,11 +89,11 @@ def calculate_illiquidity(data):
 
 
 #Function convert the numpy to parquet file and store it
-def numpy_to_parquet(sorted_numpy, name):
-    parquet_table = pa.table({'volume': sorted_numpy[:, 0],'vwap': sorted_numpy[:, 1],'open':sorted_numpy[:, 2],
-                                'close': sorted_numpy[:, 3],'high': sorted_numpy[:, 4],'low': sorted_numpy[:, 5],
-                                'time': sorted_numpy[:, 6],'n': sorted_numpy[:, 7], "illiquidity": sorted_numpy[:, 8]})
-    pq.write_table(parquet_table, "%s.parquet" %name)
+def pandas_to_parquet(data_sorted, name):
+    # parquet_table = pa.table({'volume': sorted_numpy[:, 0],'vwap': sorted_numpy[:, 1],'open':sorted_numpy[:, 2],
+    #                             'close': sorted_numpy[:, 3],'high': sorted_numpy[:, 4],'low': sorted_numpy[:, 5],
+    #                             'time': sorted_numpy[:, 6],'n': sorted_numpy[:, 7], "illiquidity": sorted_numpy[:, 8]})
+    data_sorted.to_parquet("%s.parquet" %name)
 
 
 #Function that turn parquet to csv file and store it
@@ -92,6 +131,7 @@ def margin_calculator(name, length, buying_name, selling_name):
 def month_list_generator(length, starting_month):
     month_list = [starting_month + relativedelta(months=+x) for x in range(length)]
     return month_list
+
 
 
 
@@ -133,12 +173,25 @@ if __name__ == "__main__":
     selling_time = 2
     a = []
     ticker = "X:ETHUSD"
-    starting_month = datetime.date(2021, 6, 20)
-    month_list = month_list_generator(11, starting_month)
+    starting_month = datetime.date(2022, 6, 1)
+    month_list = month_list_generator(12, starting_month)
     past_two = Pastdata(starting_month, 2)
     past_two.fetch_past_data(ticker)
-    past_two.calculate_day_volume_average(25, 5)
-    eth_dump = Get_historical_data(ticker, month_list[2], month_list[2]+relativedelta(months=+1), span="minute")
+    past_two.calculate_day_volume_average(35, 10, 1)
+    eth_dump = Get_historical_data(ticker, month_list[1], month_list[1]+relativedelta(months=+1, days=-1), span="minute")
+    eth_dump = construct_illiquidity_pandas(eth_dump)
+    eth_dump_signal = construct_month_signal(eth_dump, past_two)
+
+
+    # pandas_to_parquet(eth_dump_signal, "eth_dump_signal")
+    # parquet_to_csv("eth_dump_signal")
+    # month_split_to_day = np.split(eth_dump_signal, (eth_dump_signal.shape[0]/1440))
+    # for i in range(len(month_split_to_day)):
+    #     plot_graph(month_split_to_day[i].iloc[:, 0:8], month_split_to_day[i], "images/eth/past_1/July%s"%(i+1))                      
+    
+    
+    
+
 
 
 
