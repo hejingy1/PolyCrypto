@@ -1,4 +1,4 @@
-from simulation import parquet_to_pandas, month_list_generator
+from simulation import parquet_to_pandas, month_list_generator, parquet_to_csv, pandas_to_parquet
 from PolygonFunctionsCrypto import Get_historical_data
 from dateutil.relativedelta import *
 from scipy import stats
@@ -32,37 +32,40 @@ def parquet_request(name):
 def csv_to_pandas(name):
     return pd.read_csv("%s.csv"%name)
 
+
 starting_month = datetime.date(2022, 1, 1)
 month_list = month_list_generator(7, starting_month)
-# poly_list = []
-# for i in month_list:
-#     eth_dump = parquet_to_pandas("parquet_data/ETH/%s-%02d-%02d"%(i.year, i.month, i.day))
-#     #print(eth_dump.shape[0]/1440)
-#     month_split_to_day = np.split(eth_dump, (eth_dump.shape[0]/1440))
-#     for j in month_split_to_day:
-#         poly_list.append(j["n"].sum())
-
-
-# for i in range(len(poly_list["n"])):
-#     if poly_list[i] != poly_list.iloc[i, -1]:
-#         print(poly_list.iloc[i, -2])
 poly_list = Get_historical_data("X:ETHUSD", month_list[0], month_list[6]+relativedelta(months=+1, days=-1), span="day")
 
 
 
-testcase1 = csv_to_pandas("testcase1")
-for index, row in testcase1.iterrows():
-    if row["volume"] > 100000000:
-        testcase1.at[index, "volume"] = testcase1.at[index, "volume"]/1000
+testcase1 = csv_to_pandas("testcase12")
 testcase2 = csv_to_pandas("testcase2")
-testcase1 = testcase1.iloc[::-1]
-poly_list = stats.zscore(poly_list["n"])
-testcase1["volume"]=stats.zscore(testcase1["volume"])
-testcase2["Volume"]=stats.zscore(testcase2["Volume"])
+poly_list2 = stats.zscore(poly_list["n"])
+testcase1_list=stats.zscore(testcase1["volume"])
+testcase2_list=stats.zscore(testcase2["Volume"])
+b = [np.NaN for x in range(212)]
+for i in range(len(poly_list2)):
+
+    if np.abs(poly_list2[i]-testcase1_list[i]) > 2:
+        print("Poly:", poly_list2[i])
+        print("testcase1:", testcase1_list[i])
+        print("testcase2:", testcase2_list[i])
+        print(poly_list.iloc[i, -2]) 
+        b[i] = poly_list2[i]
+    elif np.abs(poly_list2[i]-testcase2_list[i]) > 2:
+        print("Poly:", poly_list2[i])
+        print("testcase1:", testcase1_list[i])
+        print("testcase2:", testcase2_list[i])
+        print(poly_list.iloc[i, -2])
+        b[i] = poly_list2[i]
+
 a = [x for x in range(212)]
-#plt.plot(a, testcase1["volume"], label="testcase1")
-plt.plot(a, testcase2["Volume"], label="testcase2")
-plt.plot(a, poly_list, label="polylist")
+plt.plot(a, testcase1_list, label="testcase1", color="r")
+plt.plot(a, testcase2_list, label="testcase2", color="g")
+plt.plot(a, poly_list2, label="polylist", color="b")
+plt.plot(a, b, "ro")
+plt.legend()
 plt.show()
 
 # ticker_list = rank_by_cap("HistorySimulation/informationfetch/Ticker_pool")

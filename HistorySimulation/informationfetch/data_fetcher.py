@@ -6,10 +6,15 @@ import requests
 import pandas as pd
 import json
 import os
+from dotenv import load_dotenv
 
 
+load_dotenv()
+
+MY_ENV_VAR = os.getenv('key')
 
 def ticker_search(coin_name):
+    global MY_ENV_VAR
     url = "https://api.livecoinwatch.com/coins/single"
     headers = {
     'content-type': 'application/json',
@@ -30,7 +35,7 @@ def ticker_search(coin_name):
         return coin_name
 
 def all_ticker():
-    url = f"https://api.polygon.io/v3/reference/tickers?market=crypto&date=2022-08-01&active=true&sort=ticker&order=asc&limit=5000&apiKey=vyEZKZQExqHm6QEiT7LbMCCNrxvxHU0J"
+    url = f"https://api.polygon.io/v3/reference/tickers?market=crypto&date=2022-08-01&active=true&sort=ticker&order=asc&limit=5000&apiKey={MY_ENV_VAR}"
     response = urlopen(url,timeout = 2)
     df = pd.read_json(response.read().decode("utf-8"))
     df_2 = list(df['results'])

@@ -5,13 +5,16 @@ import numpy as np
 import datetime
 import time
 from dateutil import tz
+import os
+from dotenv import load_dotenv
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 ET = tz.gettz('America/New_York')
 USERT = tz.gettz()
-API_KEY = "vyEZKZQExqHm6QEiT7LbMCCNrxvxHU0J"
+load_dotenv()
+API_KEY = os.getenv('key')
 
 
 def ts_to_easterndatetime(ts): 

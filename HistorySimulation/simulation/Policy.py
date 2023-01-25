@@ -68,8 +68,8 @@ class Pastdata:
     def fetch_past_data(self, type):
         month_list = month_list_generator(self.month_length, self.starting_date)
         for month in month_list:
-            #data_dump = Get_historical_data("%s" %type, month, month+relativedelta(months=+1), span="minute")
-            data_dump = parquet_to_pandas("parquet_data/%s/%s"%(type, month))
+            data_dump = Get_historical_data("%s" %type, month, month+relativedelta(months=+1), span="minute")
+            #data_dump = parquet_to_pandas("parquet_data/%s/%s"%(type, month))
             if self.past_data.empty:
                 self.past_data = data_dump
             else:
@@ -83,9 +83,9 @@ class Pastdata:
     #morning pick and night pick represent the amount of times I would trigger the signal between morning and night
     def calculate_day_volume_average(self, morning_pick, night_pick, multiplier):
         self.past_data = construct_illiquidity_pandas(self.past_data)
-        for i in self.past_data["illiquidity"]:
-            self.past_volume_total.append(i)
-        self.past_data[["illiquidity"]] = StandardScaler().fit_transform(self.past_data[["illiquidity"]])
+        # for i in self.past_data["illiquidity"]:
+        #     self.past_volume_total.append(i)
+        # self.past_data[["illiquidity"]] = StandardScaler().fit_transform(self.past_data[["illiquidity"]])
         month_split_to_day = np.split(self.past_data, (self.row_length/1440))
         for day in month_split_to_day:
             day_night = day.between_time("22:00", "03:00")

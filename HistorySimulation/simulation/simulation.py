@@ -219,9 +219,9 @@ if __name__ == "__main__":
     past_two = Pastdata(starting_month, past_length)
     past_two.fetch_past_data(ticker)
     past_two.calculate_day_volume_average(morning_pick, night_pick, multiplier)
-    #month_list = month_list_generator(12, starting_month)
-    #eth_dump = Get_historical_data(ticker, month_list[2], month_list[2]+relativedelta(months=+1, days=-1), span="minute")
-    eth_dump = parquet_to_pandas("parquet_data/ETH/%s-%02d-%02d"%(starting_month.year, starting_month.month+past_length, starting_month.day))
+    month_list = month_list_generator(12, starting_month)
+    eth_dump = Get_historical_data(ticker, month_list[2], month_list[2]+relativedelta(months=+1, days=-1), span="minute")
+    #eth_dump = parquet_to_pandas("parquet_data/ETH/%s-%02d-%02d"%(starting_month.year, starting_month.month+past_length, starting_month.day))
     
     eth_dump = construct_illiquidity_pandas(eth_dump)
     eth_dump_signal, margin_rate, volume, total_margin = construct_month_signal(eth_dump, past_two, selling_time)
